@@ -1,19 +1,18 @@
 #!/bin/bash
 
-if [ $# -lt 3 ]; then
-  echo "Error: Missing files!"
-  echo "Usage: ./find_perfect_matches.sh CRISPR_1f.fna ERR430992.fna perfect_matches.txt"
-  exit 1
+# Usage: ./find_homologs.sh <query file> <subject file> <output file>
+
+if [ "$#" -ne 3 ]; then
+    echo "Usage: ./find_homologs.sh <query file> <subject file> <output file>"
+    exit 1
 fi
 
-query_file="$1"
-subject_file="$2"
-output_file="$3"
+QUERY=$1
+SUBJECT=$2
+OUTPUT=$3
 
-makeblastdb -in "$subject_file" -dbtype nucl -out "${subject_file}_db"
+blastx -query "$QUERY" -db "$SUBJECT" -outfmt 6 -perc_identity 30 -qcov_hsp 0.9 > "$OUTPUT"
 
-blastn -query "$query_file" -db "${subject_file}_db" -outfmt 6 -perc_identity 100 > "$output_file"
+NUM_MATCHES=$(wc -l < "$OUTPUT")
+echo "Number of matches: $NUM_MATCHES"
 
-num_matches=$(wc -l < "$output_file")
-
-echo "Found $num_matches perfect matches in $output_file."
