@@ -1,0 +1,6 @@
+name: newenvironment
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+prefix: /Users/rithikagorrepati/miniconda3/envs/newenvironment
