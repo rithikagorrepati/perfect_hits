@@ -1,24 +1,28 @@
 #!/bin/bash
 
-if [ "$#" -ne 2 ]; then
-  echo "Usage: $0 <assembly file> <BED file>"
-  exit 1
+# Check if correct number of arguments are provided
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 <assembly.fasta> <repeat.fasta>"
+    exit 1
 fi
 
-ASSEMBLY_FILE="$1"
-BED_FILE="$2"
-OUTPUT_FILE="spacers.fna"
+assembly=$1
+repeat=$2
 
-if [[ ! -f "$ASSEMBLY_FILE" ]]; then
-  echo "Error: Assembly file '$ASSEMBLY_FILE' not found."
-  exit 1
-fi
+# Find perfect matches
+blastn -query $repeat -subject $assembly -task blastn-short -outfmt 6 | \
+    awk '$3==100 && $4==length($1)' > perfect_matches.txt
 
-if [[ ! -f "$BED_FILE" ]]; then
-  echo "Error: BED file '$BED_FILE' not found."
-  exit 1
-fi
+# Extract spacer coordinates
+awk 'BEGIN {OFS="\t"} 
+     NR>1 {
+        start = $9 + $4
+        end = $7 - 1
+        if (start < end) 
+            print $2, start, end
+     }' perfect_matches.txt > spacers.bed
 
-seqtk subseq "$ASSEMBLY_FILE" "$BED_FILE" > "$OUTPUT_FILE"
+# Extract spacer sequences
+seqtk subseq $assembly spacers.bed > spacers.fasta
 
-echo "Spacer sequences have been saved to '$OUTPUT_FILE'."
+echo "Spacer sequences extracted to spacers.fasta"
